@@ -3,7 +3,6 @@ import java.io.Serializable;
 public class Aluno extends Pessoa implements Serializable {
 
     private static final long serialVersionUID = 2L;
-
     private String matricula;
     private String curso;
 

@@ -41,11 +41,7 @@ public class TelaPrincipal extends JFrame {
     private JTable tabelaPessoas;
     private DefaultTableModel modeloPessoas;
 
-    // log embaixo da tela
-    private JTextArea log;
-
     public TelaPrincipal() {
-        // carrega os dados salvos ou cria biblioteca nova
         biblioteca = Biblioteca.carregar();
         montarTela();
     }
@@ -54,31 +50,18 @@ public class TelaPrincipal extends JFrame {
         setTitle("Gerenciador de Biblioteca - GUS");
         setSize(850, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null); // centraliza na tela
+        setLocationRelativeTo(null);
 
-        // abas principais
         JTabbedPane abas = new JTabbedPane();
         abas.addTab("Acervo", abaAcervo());
         abas.addTab("Novo Livro", abaCadastroLivro());
         abas.addTab("Emprestimo", abaEmprestimo());
         abas.addTab("Pessoas", abaPessoas());
 
-        // area de log verde embaixo
-        log = new JTextArea(4, 0);
-        log.setEditable(false);
-        log.setBackground(new Color(20, 20, 20));
-        log.setForeground(new Color(50, 255, 80));
-        log.setFont(new Font("Courier New", Font.PLAIN, 12));
-        JScrollPane scrollLog = new JScrollPane(log);
-        scrollLog.setBorder(BorderFactory.createTitledBorder("Log do sistema"));
-
-        // monta o layout geral
         setLayout(new BorderLayout());
         add(abas, BorderLayout.CENTER);
-        add(scrollLog, BorderLayout.SOUTH);
 
         setVisible(true);
-        registrarLog("Sistema carregado com sucesso!");
         recarregarTabelaLivros();
     }
 
@@ -89,13 +72,12 @@ public class TelaPrincipal extends JFrame {
         JPanel tela = new JPanel(new BorderLayout(8, 8));
         tela.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // barra de cima com busca e botoes
         JPanel barra = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
         campoBusca = new JTextField(20);
-        JButton btnBuscar    = new JButton("Buscar");
-        JButton btnAtualizar = new JButton("Atualizar");
-        JButton btnImportar  = new JButton("Importar TXT");
-        JButton btnExcluir   = new JButton("Excluir Livro");
+        JButton btnBuscar    = criarBotao("Buscar");
+        JButton btnAtualizar = criarBotao("Atualizar");
+        JButton btnImportar  = criarBotao("Importar TXT");
+        JButton btnExcluir   = criarBotao("Excluir Livro");
 
         barra.add(new JLabel("Buscar:"));
         barra.add(campoBusca);
@@ -104,12 +86,11 @@ public class TelaPrincipal extends JFrame {
         barra.add(btnImportar);
         barra.add(btnExcluir);
 
-        // tabela do acervo
         String[] colunas = { "Titulo", "Autor", "ISBN", "Ano", "Situacao" };
         modeloLivros = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                return false; // nao deixa editar direto na tabela
+                return false;
             }
         };
         tabelaLivros = new JTable(modeloLivros);
@@ -119,7 +100,6 @@ public class TelaPrincipal extends JFrame {
         tela.add(barra, BorderLayout.NORTH);
         tela.add(new JScrollPane(tabelaLivros), BorderLayout.CENTER);
 
-        // eventos dos botoes
         btnBuscar.addActionListener(e -> buscarNaTabela());
         btnAtualizar.addActionListener(e -> recarregarTabelaLivros());
         btnImportar.addActionListener(e -> importarDoTxt());
@@ -143,7 +123,6 @@ public class TelaPrincipal extends JFrame {
                 biblioteca.removerLivro(titulo);
                 biblioteca.salvar();
                 recarregarTabelaLivros();
-                registrarLog("Livro removido: " + titulo);
             }
         });
 
@@ -171,7 +150,7 @@ public class TelaPrincipal extends JFrame {
         inserirCampo(tela, g, "ISBN:", campoIsbn, 2);
         inserirCampo(tela, g, "Ano de publicacao:", campoAno, 3);
 
-        JButton btn = new JButton("Cadastrar Livro");
+        JButton btn = criarBotao("Cadastrar Livro");
         btn.setPreferredSize(new Dimension(180, 32));
         g.gridx = 0; g.gridy = 4;
         g.gridwidth = 2;
@@ -190,7 +169,6 @@ public class TelaPrincipal extends JFrame {
         JPanel tela = new JPanel(new GridLayout(2, 1, 10, 10));
         tela.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // parte de cima - realizar emprestimo
         JPanel parteCima = new JPanel(new GridBagLayout());
         parteCima.setBorder(BorderFactory.createTitledBorder("Realizar Emprestimo"));
         GridBagConstraints g1 = new GridBagConstraints();
@@ -203,14 +181,13 @@ public class TelaPrincipal extends JFrame {
         inserirCampo(parteCima, g1, "Titulo do livro:", campoTituloEmp, 0);
         inserirCampo(parteCima, g1, "Nome da pessoa:", campoNomeEmp, 1);
 
-        JButton btnEmp = new JButton("Emprestar");
+        JButton btnEmp = criarBotao("Emprestar");
         g1.gridx = 0; g1.gridy = 2; g1.gridwidth = 2;
         g1.fill = GridBagConstraints.NONE;
         g1.anchor = GridBagConstraints.CENTER;
         parteCima.add(btnEmp, g1);
         btnEmp.addActionListener(e -> fazerEmprestimo());
 
-        // parte de baixo - devolver
         JPanel parteBaixo = new JPanel(new GridBagLayout());
         parteBaixo.setBorder(BorderFactory.createTitledBorder("Devolver Livro"));
         GridBagConstraints g2 = new GridBagConstraints();
@@ -220,7 +197,7 @@ public class TelaPrincipal extends JFrame {
         campoTituloDev = new JTextField(18);
         inserirCampo(parteBaixo, g2, "Titulo do livro:", campoTituloDev, 0);
 
-        JButton btnDev = new JButton("Devolver");
+        JButton btnDev = criarBotao("Devolver");
         g2.gridx = 0; g2.gridy = 1; g2.gridwidth = 2;
         g2.fill = GridBagConstraints.NONE;
         g2.anchor = GridBagConstraints.CENTER;
@@ -239,7 +216,6 @@ public class TelaPrincipal extends JFrame {
         JPanel tela = new JPanel(new BorderLayout(8, 8));
         tela.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // formulario de cadastro
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(BorderFactory.createTitledBorder("Cadastrar Pessoa"));
         GridBagConstraints g = new GridBagConstraints();
@@ -254,7 +230,6 @@ public class TelaPrincipal extends JFrame {
         inserirCampo(form, g, "CPF:", campoCpf, 1);
         inserirCampo(form, g, "Email:", campoEmail, 2);
 
-        // radio buttons para escolher o tipo
         JRadioButton rbAluno     = new JRadioButton("Aluno", true);
         JRadioButton rbProfessor = new JRadioButton("Professor");
         ButtonGroup grupo = new ButtonGroup();
@@ -270,7 +245,6 @@ public class TelaPrincipal extends JFrame {
         g.gridx = 1; g.weightx = 1;
         form.add(painelRadio, g);
 
-        // campos exclusivos de aluno
         campoMatricula = new JTextField(18);
         campoCurso     = new JTextField(18);
         painelAluno = new JPanel(new GridBagLayout());
@@ -280,7 +254,6 @@ public class TelaPrincipal extends JFrame {
         inserirCampo(painelAluno, gA, "Matricula:", campoMatricula, 0);
         inserirCampo(painelAluno, gA, "Curso:", campoCurso, 1);
 
-        // campos exclusivos de professor
         campoSiape = new JTextField(18);
         campoDpto  = new JTextField(18);
         painelProfessor = new JPanel(new GridBagLayout());
@@ -296,13 +269,12 @@ public class TelaPrincipal extends JFrame {
         g.gridy = 5;
         form.add(painelProfessor, g);
 
-        btnCadastrarPessoa = new JButton("Cadastrar Aluno");
+        btnCadastrarPessoa = criarBotao("Cadastrar Aluno");
         g.gridy = 6;
         g.fill = GridBagConstraints.NONE;
         g.anchor = GridBagConstraints.CENTER;
         form.add(btnCadastrarPessoa, g);
 
-        // troca os campos quando muda o radio button
         rbAluno.addActionListener(e -> {
             painelAluno.setVisible(true);
             painelProfessor.setVisible(false);
@@ -324,7 +296,6 @@ public class TelaPrincipal extends JFrame {
             else cadastrarProfessor();
         });
 
-        // tabela com as pessoas cadastradas
         String[] cols = { "Nome", "CPF", "Tipo", "Info" };
         modeloPessoas = new DefaultTableModel(cols, 0) {
             @Override
@@ -336,7 +307,7 @@ public class TelaPrincipal extends JFrame {
         JPanel painelBaixo = new JPanel(new BorderLayout(4, 4));
         painelBaixo.add(new JScrollPane(tabelaPessoas), BorderLayout.CENTER);
 
-        JButton btnExcluir = new JButton("Excluir Pessoa");
+        JButton btnExcluir = criarBotao("Excluir Pessoa");
         painelBaixo.add(btnExcluir, BorderLayout.SOUTH);
 
         btnExcluir.addActionListener(e -> {
@@ -361,7 +332,6 @@ public class TelaPrincipal extends JFrame {
                 biblioteca.removerPessoa(cpf);
                 biblioteca.salvar();
                 recarregarTabelaPessoas();
-                registrarLog(tipo + " removido(a): " + nome);
             }
         });
 
@@ -411,18 +381,15 @@ public class TelaPrincipal extends JFrame {
             }
         }
 
-        Livro novo = new Livro(titulo, autor, isbn.isEmpty() ? "N/A" : isbn, ano);
-        biblioteca.adicionarLivro(novo);
+        biblioteca.adicionarLivro(new Livro(titulo, autor, isbn.isEmpty() ? "N/A" : isbn, ano));
         biblioteca.salvar();
 
-        // limpa os campos
         campoTitulo.setText("");
         campoAutor.setText("");
         campoIsbn.setText("");
         campoAno.setText("");
 
         recarregarTabelaLivros();
-        registrarLog("Livro adicionado: " + titulo);
     }
 
     private void buscarNaTabela() {
@@ -439,13 +406,11 @@ public class TelaPrincipal extends JFrame {
                 });
             }
         }
-        registrarLog("Busca: " + modeloLivros.getRowCount() + " resultado(s) para \"" + campoBusca.getText().trim() + "\"");
     }
 
     private void importarDoTxt() {
-        int qtd = biblioteca.importarLivrosTxt();
+        biblioteca.importarLivrosTxt();
         recarregarTabelaLivros();
-        registrarLog(qtd + " livro(s) importado(s) do arquivo livros.txt");
     }
 
     private void fazerEmprestimo() {
@@ -464,12 +429,10 @@ public class TelaPrincipal extends JFrame {
             campoTituloEmp.setText("");
             campoNomeEmp.setText("");
             recarregarTabelaLivros();
-            registrarLog("Emprestimo feito: \"" + titulo + "\" para " + nome);
         } catch (LivroIndisponivelException ex) {
             JOptionPane.showMessageDialog(this,
                 ex.getMessage(),
                 "Livro indisponivel", JOptionPane.ERROR_MESSAGE);
-            registrarLog("Erro no emprestimo: " + ex.getMessage());
         }
     }
 
@@ -486,7 +449,6 @@ public class TelaPrincipal extends JFrame {
         biblioteca.devolver(titulo);
         campoTituloDev.setText("");
         recarregarTabelaLivros();
-        registrarLog("Devolucao realizada: \"" + titulo + "\"");
     }
 
     private void cadastrarAluno() {
@@ -507,7 +469,6 @@ public class TelaPrincipal extends JFrame {
         biblioteca.salvar();
         limparCamposPessoa();
         recarregarTabelaPessoas();
-        registrarLog("Aluno cadastrado: " + nome);
     }
 
     private void cadastrarProfessor() {
@@ -528,7 +489,6 @@ public class TelaPrincipal extends JFrame {
         biblioteca.salvar();
         limparCamposPessoa();
         recarregarTabelaPessoas();
-        registrarLog("Professor cadastrado: " + nome);
     }
 
     private void limparCamposPessoa() {
@@ -574,9 +534,16 @@ public class TelaPrincipal extends JFrame {
         }
     }
 
-    // adiciona uma linha no log
-    private void registrarLog(String msg) {
-        log.append("> " + msg + "\n");
-        log.setCaretPosition(log.getDocument().getLength());
+    // deixa o botao com visual mais simples e flat
+    private JButton criarBotao(String texto) {
+        JButton btn = new JButton(texto);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setBackground(new Color(60, 90, 160));
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Arial", Font.PLAIN, 13));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setOpaque(true);
+        return btn;
     }
 }

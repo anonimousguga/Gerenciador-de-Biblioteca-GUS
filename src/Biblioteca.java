@@ -140,9 +140,34 @@ public class Biblioteca implements Serializable {
             String linha;
             while ((linha = br.readLine()) != null) {
                 linha = linha.trim();
-                if (!linha.isEmpty() && buscarLivro(linha) == null) {
-                    livros.add(new Livro(linha, "Autor Desconhecido"));
-                    count++;
+                if (!linha.isEmpty()) {
+                    // Quebra a linha onde tiver ";"
+                    String[] partes = linha.split(";");
+                    
+                    // O primeiro elemento sempre será o título
+                    String titulo = partes[0].trim();
+                    
+                    // Verifica se o livro já existe para não duplicar
+                    if (buscarLivro(titulo) == null) {
+                        String autor = "Autor Desconhecido";
+                        String isbn = "N/A";
+                        int ano = 0;
+                        
+                        // Preenche os outros dados se eles existirem na linha
+                        if (partes.length > 1) autor = partes[1].trim();
+                        if (partes.length > 2) isbn = partes[2].trim();
+                        if (partes.length > 3) {
+                            try {
+                                ano = Integer.parseInt(partes[3].trim());
+                            } catch (NumberFormatException e) {
+                                ano = 0; // Se o ano não for um número válido, joga 0
+                            }
+                        }
+                        
+                        // Cria o livro com todos os dados importados
+                        livros.add(new Livro(titulo, autor, isbn, ano));
+                        count++;
+                    }
                 }
             }
             br.close();

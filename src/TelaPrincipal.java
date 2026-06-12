@@ -3,528 +3,580 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * Interface gráfica principal do Gerenciador de biblioteca GUS.
- * Utiliza Java Swing com JFrame, JPanel, JButton, JTextField, JTable e eventos.
- */
+// tela principal do sistema, aqui fica tudo da interface grafica
 public class TelaPrincipal extends JFrame {
 
     private Biblioteca biblioteca;
 
-    // Componentes da aba Livros
+    // campos da aba de livros
     private JTextField campoBusca;
     private JTable tabelaLivros;
-    private DefaultTableModel modeloTabelaLivros;
+    private DefaultTableModel modeloLivros;
 
-    // Componentes da aba Cadastro de Livro
+    // campos do cadastro de livro
     private JTextField campoTitulo;
     private JTextField campoAutor;
     private JTextField campoIsbn;
     private JTextField campoAno;
 
-    // Componentes da aba Empréstimo
-    private JTextField campoTituloEmprestimo;
-    private JTextField campoNomePessoa;
-    private JTextField campoTituloDevolucao;
+    // campos do emprestimo
+    private JTextField campoTituloEmp;
+    private JTextField campoNomeEmp;
+    private JTextField campoTituloDev;
 
-    // Componentes da aba Pessoas
-    private JTextField campoNomeCadastro;
+    // campos de pessoas
+    private JTextField campoNome;
     private JTextField campoCpf;
     private JTextField campoEmail;
-    // Campos exclusivos de Aluno
     private JTextField campoMatricula;
     private JTextField campoCurso;
-    // Campos exclusivos de Professor
     private JTextField campoSiape;
-    private JTextField campoDepartamento;
-    // Painéis que alternam
-    private JPanel painelCamposAluno;
-    private JPanel painelCamposProfessor;
-    private JButton botaoCadastrarPessoa;
+    private JTextField campoDpto;
+
+    // paineis que aparecem/somem dependendo do tipo
+    private JPanel painelAluno;
+    private JPanel painelProfessor;
+    private JButton btnCadastrarPessoa;
 
     private JTable tabelaPessoas;
-    private DefaultTableModel modeloTabelaPessoas;
+    private DefaultTableModel modeloPessoas;
 
-    // Área de log
-    private JTextArea areaLog;
+    // log embaixo da tela
+    private JTextArea log;
 
     public TelaPrincipal() {
+        // carrega os dados salvos ou cria biblioteca nova
         biblioteca = Biblioteca.carregar();
-        iniciarUI();
+        montarTela();
     }
 
-    private void iniciarUI() {
-        setTitle("BibliotecaManager");
-        setSize(800, 600);
+    private void montarTela() {
+        setTitle("Gerenciador de Biblioteca - GUS");
+        setSize(850, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(null); // centraliza na tela
 
+        // abas principais
         JTabbedPane abas = new JTabbedPane();
-        abas.addTab("Acervo",          painelAcervo());
-        abas.addTab("Cadastrar Livro",  painelCadastrarLivro());
-        abas.addTab("Empréstimo",       painelEmprestimo());
-        abas.addTab("Pessoas",          painelPessoas());
+        abas.addTab("Acervo", abaAcervo());
+        abas.addTab("Novo Livro", abaCadastroLivro());
+        abas.addTab("Emprestimo", abaEmprestimo());
+        abas.addTab("Pessoas", abaPessoas());
 
-        areaLog = new JTextArea(4, 0);
-        areaLog.setEditable(false);
-        areaLog.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        areaLog.setBackground(new Color(30, 30, 30));
-        areaLog.setForeground(new Color(0, 255, 100));
-        JScrollPane scrollLog = new JScrollPane(areaLog);
-        scrollLog.setBorder(BorderFactory.createTitledBorder("Log"));
+        // area de log verde embaixo
+        log = new JTextArea(4, 0);
+        log.setEditable(false);
+        log.setBackground(new Color(20, 20, 20));
+        log.setForeground(new Color(50, 255, 80));
+        log.setFont(new Font("Courier New", Font.PLAIN, 12));
+        JScrollPane scrollLog = new JScrollPane(log);
+        scrollLog.setBorder(BorderFactory.createTitledBorder("Log do sistema"));
 
-        JPanel painelPrincipal = new JPanel(new BorderLayout());
-        painelPrincipal.add(abas, BorderLayout.CENTER);
-        painelPrincipal.add(scrollLog, BorderLayout.SOUTH);
+        // monta o layout geral
+        setLayout(new BorderLayout());
+        add(abas, BorderLayout.CENTER);
+        add(scrollLog, BorderLayout.SOUTH);
 
-        add(painelPrincipal);
         setVisible(true);
-
-        log("Sistema iniciado. Bem-vindo ao BibliotecaManager!");
-        atualizarTabelaLivros();
+        registrarLog("Sistema carregado com sucesso!");
+        recarregarTabelaLivros();
     }
 
-    // ── Aba Acervo ───────────────────────────────────────────
+    // -------------------------------------------------------
+    // ABA ACERVO
+    // -------------------------------------------------------
+    private JPanel abaAcervo() {
+        JPanel tela = new JPanel(new BorderLayout(8, 8));
+        tela.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-    private JPanel painelAcervo() {
-        JPanel painel = new JPanel(new BorderLayout(10, 10));
-        painel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // barra de cima com busca e botoes
+        JPanel barra = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
+        campoBusca = new JTextField(20);
+        JButton btnBuscar    = new JButton("Buscar");
+        JButton btnAtualizar = new JButton("Atualizar");
+        JButton btnImportar  = new JButton("Importar TXT");
+        JButton btnExcluir   = new JButton("Excluir Livro");
 
-        JPanel painelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        painelBusca.add(new JLabel("Buscar:"));
-        campoBusca = new JTextField(25);
-        JButton botaoBuscar    = new JButton("Buscar");
-        JButton botaoImportar  = new JButton("Importar TXT");
-        JButton botaoAtualizar = new JButton("Atualizar");
-        JButton botaoExcluir   = new JButton("Excluir Selecionado"); // Novo botão
-        
-        painelBusca.add(campoBusca);
-        painelBusca.add(botaoBuscar);
-        painelBusca.add(botaoAtualizar);
-        painelBusca.add(botaoImportar);
-        painelBusca.add(botaoExcluir); // Adicionado ao painel
+        barra.add(new JLabel("Buscar:"));
+        barra.add(campoBusca);
+        barra.add(btnBuscar);
+        barra.add(btnAtualizar);
+        barra.add(btnImportar);
+        barra.add(btnExcluir);
 
-        String[] colunas = {"Título", "Autor", "ISBN", "Ano", "Status"};
-        modeloTabelaLivros = new DefaultTableModel(colunas, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+        // tabela do acervo
+        String[] colunas = { "Titulo", "Autor", "ISBN", "Ano", "Situacao" };
+        modeloLivros = new DefaultTableModel(colunas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false; // nao deixa editar direto na tabela
+            }
         };
-        tabelaLivros = new JTable(modeloTabelaLivros);
-        tabelaLivros.setRowHeight(22);
+        tabelaLivros = new JTable(modeloLivros);
+        tabelaLivros.setRowHeight(24);
+        tabelaLivros.getTableHeader().setReorderingAllowed(false);
 
-        painel.add(painelBusca, BorderLayout.NORTH);
-        painel.add(new JScrollPane(tabelaLivros), BorderLayout.CENTER);
+        tela.add(barra, BorderLayout.NORTH);
+        tela.add(new JScrollPane(tabelaLivros), BorderLayout.CENTER);
 
-        botaoBuscar.addActionListener(e -> buscarLivro());
-        botaoAtualizar.addActionListener(e -> atualizarTabelaLivros());
-        botaoImportar.addActionListener(e -> importarTxt());
-        
-        // Ação do novo botão de excluir livro
-        botaoExcluir.addActionListener(e -> {
-            int linha = tabelaLivros.getSelectedRow();
-            if (linha >= 0) {
-                String titulo = modeloTabelaLivros.getValueAt(linha, 0).toString();
-                int resposta = JOptionPane.showConfirmDialog(this, 
-                        "Tem certeza que deseja excluir o livro \"" + titulo + "\"?", 
-                        "Confirmação", JOptionPane.YES_NO_OPTION);
-                
-                if (resposta == JOptionPane.YES_OPTION) {
-                    biblioteca.removerLivro(titulo);
-                    biblioteca.salvar();
-                    atualizarTabelaLivros();
-                    log("Livro excluído do acervo: " + titulo);
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Por favor, selecione um livro na tabela para excluir.", "Aviso", JOptionPane.WARNING_MESSAGE);
+        // eventos dos botoes
+        btnBuscar.addActionListener(e -> buscarNaTabela());
+        btnAtualizar.addActionListener(e -> recarregarTabelaLivros());
+        btnImportar.addActionListener(e -> importarDoTxt());
+
+        btnExcluir.addActionListener(e -> {
+            int linhaSelecionada = tabelaLivros.getSelectedRow();
+
+            if (linhaSelecionada < 0) {
+                JOptionPane.showMessageDialog(this,
+                    "Selecione um livro na tabela primeiro.",
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String titulo = modeloLivros.getValueAt(linhaSelecionada, 0).toString();
+            int confirmacao = JOptionPane.showConfirmDialog(this,
+                "Excluir o livro \"" + titulo + "\"?",
+                "Confirmar exclusao", JOptionPane.YES_NO_OPTION);
+
+            if (confirmacao == JOptionPane.YES_OPTION) {
+                biblioteca.removerLivro(titulo);
+                biblioteca.salvar();
+                recarregarTabelaLivros();
+                registrarLog("Livro removido: " + titulo);
             }
         });
 
-        return painel;
+        return tela;
     }
 
-    // ── Aba Cadastrar Livro ──────────────────────────────────
+    // -------------------------------------------------------
+    // ABA CADASTRO DE LIVRO
+    // -------------------------------------------------------
+    private JPanel abaCadastroLivro() {
+        JPanel tela = new JPanel(new GridBagLayout());
+        tela.setBorder(BorderFactory.createEmptyBorder(30, 60, 30, 60));
 
-    private JPanel painelCadastrarLivro() {
-        JPanel painel = new JPanel(new GridBagLayout());
-        painel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill   = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(6, 6, 6, 6);
+        g.fill = GridBagConstraints.HORIZONTAL;
 
-        campoTitulo = new JTextField(25);
-        campoAutor  = new JTextField(25);
-        campoIsbn   = new JTextField(25);
-        campoAno    = new JTextField(25);
+        campoTitulo = new JTextField(22);
+        campoAutor  = new JTextField(22);
+        campoIsbn   = new JTextField(22);
+        campoAno    = new JTextField(22);
 
-        adicionarCampo(painel, gbc, "Título:", campoTitulo, 0);
-        adicionarCampo(painel, gbc, "Autor:",  campoAutor,  1);
-        adicionarCampo(painel, gbc, "ISBN:",   campoIsbn,   2);
-        adicionarCampo(painel, gbc, "Ano:",    campoAno,    3);
+        inserirCampo(tela, g, "Titulo:", campoTitulo, 0);
+        inserirCampo(tela, g, "Autor:", campoAutor, 1);
+        inserirCampo(tela, g, "ISBN:", campoIsbn, 2);
+        inserirCampo(tela, g, "Ano de publicacao:", campoAno, 3);
 
-        JButton botaoCadastrar = new JButton("Cadastrar Livro");
-        botaoCadastrar.setPreferredSize(new Dimension(200, 35));
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        painel.add(botaoCadastrar, gbc);
+        JButton btn = new JButton("Cadastrar Livro");
+        btn.setPreferredSize(new Dimension(180, 32));
+        g.gridx = 0; g.gridy = 4;
+        g.gridwidth = 2;
+        g.fill = GridBagConstraints.NONE;
+        g.anchor = GridBagConstraints.CENTER;
+        tela.add(btn, g);
 
-        botaoCadastrar.addActionListener(e -> cadastrarLivro());
-        return painel;
+        btn.addActionListener(e -> salvarLivro());
+        return tela;
     }
 
-    // ── Aba Empréstimo ───────────────────────────────────────
+    // -------------------------------------------------------
+    // ABA EMPRESTIMO
+    // -------------------------------------------------------
+    private JPanel abaEmprestimo() {
+        JPanel tela = new JPanel(new GridLayout(2, 1, 10, 10));
+        tela.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-    private JPanel painelEmprestimo() {
-        JPanel painel = new JPanel(new GridLayout(2, 1, 10, 10));
-        painel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // parte de cima - realizar emprestimo
+        JPanel parteCima = new JPanel(new GridBagLayout());
+        parteCima.setBorder(BorderFactory.createTitledBorder("Realizar Emprestimo"));
+        GridBagConstraints g1 = new GridBagConstraints();
+        g1.insets = new Insets(6, 6, 6, 6);
+        g1.fill = GridBagConstraints.HORIZONTAL;
 
-        // Empréstimo
-        JPanel painelEmp = new JPanel(new GridBagLayout());
-        painelEmp.setBorder(BorderFactory.createTitledBorder("Realizar Empréstimo"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 6, 6, 6);
-        gbc.fill   = GridBagConstraints.HORIZONTAL;
+        campoTituloEmp = new JTextField(18);
+        campoNomeEmp   = new JTextField(18);
 
-        campoTituloEmprestimo = new JTextField(20);
-        campoNomePessoa       = new JTextField(20);
+        inserirCampo(parteCima, g1, "Titulo do livro:", campoTituloEmp, 0);
+        inserirCampo(parteCima, g1, "Nome da pessoa:", campoNomeEmp, 1);
 
-        adicionarCampo(painelEmp, gbc, "Título do Livro:", campoTituloEmprestimo, 0);
-        adicionarCampo(painelEmp, gbc, "Nome da Pessoa:",  campoNomePessoa,       1);
+        JButton btnEmp = new JButton("Emprestar");
+        g1.gridx = 0; g1.gridy = 2; g1.gridwidth = 2;
+        g1.fill = GridBagConstraints.NONE;
+        g1.anchor = GridBagConstraints.CENTER;
+        parteCima.add(btnEmp, g1);
+        btnEmp.addActionListener(e -> fazerEmprestimo());
 
-        JButton botaoEmprestar = new JButton("Emprestar");
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        painelEmp.add(botaoEmprestar, gbc);
-        botaoEmprestar.addActionListener(e -> realizarEmprestimo());
+        // parte de baixo - devolver
+        JPanel parteBaixo = new JPanel(new GridBagLayout());
+        parteBaixo.setBorder(BorderFactory.createTitledBorder("Devolver Livro"));
+        GridBagConstraints g2 = new GridBagConstraints();
+        g2.insets = new Insets(6, 6, 6, 6);
+        g2.fill = GridBagConstraints.HORIZONTAL;
 
-        // Devolução
-        JPanel painelDev = new JPanel(new GridBagLayout());
-        painelDev.setBorder(BorderFactory.createTitledBorder("Realizar Devolução"));
-        GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.insets = new Insets(6, 6, 6, 6);
-        gbc2.fill   = GridBagConstraints.HORIZONTAL;
+        campoTituloDev = new JTextField(18);
+        inserirCampo(parteBaixo, g2, "Titulo do livro:", campoTituloDev, 0);
 
-        campoTituloDevolucao = new JTextField(20);
-        adicionarCampo(painelDev, gbc2, "Título do Livro:", campoTituloDevolucao, 0);
+        JButton btnDev = new JButton("Devolver");
+        g2.gridx = 0; g2.gridy = 1; g2.gridwidth = 2;
+        g2.fill = GridBagConstraints.NONE;
+        g2.anchor = GridBagConstraints.CENTER;
+        parteBaixo.add(btnDev, g2);
+        btnDev.addActionListener(e -> fazerDevolucao());
 
-        JButton botaoDevolver = new JButton("Devolver");
-        gbc2.gridx = 0; gbc2.gridy = 1; gbc2.gridwidth = 2;
-        gbc2.fill = GridBagConstraints.NONE;
-        gbc2.anchor = GridBagConstraints.CENTER;
-        painelDev.add(botaoDevolver, gbc2);
-        botaoDevolver.addActionListener(e -> realizarDevolucao());
-
-        painel.add(painelEmp);
-        painel.add(painelDev);
-        return painel;
+        tela.add(parteCima);
+        tela.add(parteBaixo);
+        return tela;
     }
 
-    // ── Aba Pessoas ──────────────────────────────────────────
+    // -------------------------------------------------------
+    // ABA PESSOAS
+    // -------------------------------------------------------
+    private JPanel abaPessoas() {
+        JPanel tela = new JPanel(new BorderLayout(8, 8));
+        tela.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-    private JPanel painelPessoas() {
-        JPanel painel = new JPanel(new BorderLayout(10, 10));
-        painel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Formulário
+        // formulario de cadastro
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(BorderFactory.createTitledBorder("Cadastrar Pessoa"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill   = GridBagConstraints.HORIZONTAL;
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(4, 4, 4, 4);
+        g.fill = GridBagConstraints.HORIZONTAL;
 
-        campoNomeCadastro = new JTextField(20);
-        campoCpf          = new JTextField(20);
-        campoEmail        = new JTextField(20);
+        campoNome  = new JTextField(18);
+        campoCpf   = new JTextField(18);
+        campoEmail = new JTextField(18);
 
-        adicionarCampo(form, gbc, "Nome:",   campoNomeCadastro, 0);
-        adicionarCampo(form, gbc, "CPF:",    campoCpf,          1);
-        adicionarCampo(form, gbc, "E-mail:", campoEmail,        2);
+        inserirCampo(form, g, "Nome:", campoNome, 0);
+        inserirCampo(form, g, "CPF:", campoCpf, 1);
+        inserirCampo(form, g, "Email:", campoEmail, 2);
 
-        // Seletor Aluno / Professor
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; gbc.weightx = 0;
-        form.add(new JLabel("Tipo:"), gbc);
-        JRadioButton radioAluno     = new JRadioButton("Aluno", true);
-        JRadioButton radioProfessor = new JRadioButton("Professor");
+        // radio buttons para escolher o tipo
+        JRadioButton rbAluno     = new JRadioButton("Aluno", true);
+        JRadioButton rbProfessor = new JRadioButton("Professor");
         ButtonGroup grupo = new ButtonGroup();
-        grupo.add(radioAluno);
-        grupo.add(radioProfessor);
-        JPanel painelRadio = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        painelRadio.add(radioAluno);
-        painelRadio.add(radioProfessor);
-        gbc.gridx = 1; gbc.weightx = 1;
-        form.add(painelRadio, gbc);
+        grupo.add(rbAluno);
+        grupo.add(rbProfessor);
 
-        // Campos de Aluno
-        campoMatricula = new JTextField(20);
-        campoCurso     = new JTextField(20);
-        painelCamposAluno = new JPanel(new GridBagLayout());
-        GridBagConstraints gbcA = new GridBagConstraints();
-        gbcA.insets = new Insets(5, 5, 5, 5);
-        gbcA.fill   = GridBagConstraints.HORIZONTAL;
-        adicionarCampo(painelCamposAluno, gbcA, "Matrícula:", campoMatricula, 0);
-        adicionarCampo(painelCamposAluno, gbcA, "Curso:",     campoCurso,     1);
+        JPanel painelRadio = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        painelRadio.add(rbAluno);
+        painelRadio.add(rbProfessor);
 
-        // Campos de Professor
-        campoSiape        = new JTextField(20);
-        campoDepartamento = new JTextField(20);
-        painelCamposProfessor = new JPanel(new GridBagLayout());
-        GridBagConstraints gbcP = new GridBagConstraints();
-        gbcP.insets = new Insets(5, 5, 5, 5);
-        gbcP.fill   = GridBagConstraints.HORIZONTAL;
-        adicionarCampo(painelCamposProfessor, gbcP, "SIAPE:",        campoSiape,        0);
-        adicionarCampo(painelCamposProfessor, gbcP, "Departamento:", campoDepartamento, 1);
-        painelCamposProfessor.setVisible(false);
+        g.gridx = 0; g.gridy = 3; g.gridwidth = 1; g.weightx = 0;
+        form.add(new JLabel("Tipo:"), g);
+        g.gridx = 1; g.weightx = 1;
+        form.add(painelRadio, g);
 
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
-        form.add(painelCamposAluno,    gbc);
-        gbc.gridy = 5;
-        form.add(painelCamposProfessor, gbc);
+        // campos exclusivos de aluno
+        campoMatricula = new JTextField(18);
+        campoCurso     = new JTextField(18);
+        painelAluno = new JPanel(new GridBagLayout());
+        GridBagConstraints gA = new GridBagConstraints();
+        gA.insets = new Insets(4, 4, 4, 4);
+        gA.fill = GridBagConstraints.HORIZONTAL;
+        inserirCampo(painelAluno, gA, "Matricula:", campoMatricula, 0);
+        inserirCampo(painelAluno, gA, "Curso:", campoCurso, 1);
 
-        // Botão cadastrar
-        botaoCadastrarPessoa = new JButton("Cadastrar Aluno");
-        gbc.gridy = 6;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        form.add(botaoCadastrarPessoa, gbc);
+        // campos exclusivos de professor
+        campoSiape = new JTextField(18);
+        campoDpto  = new JTextField(18);
+        painelProfessor = new JPanel(new GridBagLayout());
+        GridBagConstraints gP = new GridBagConstraints();
+        gP.insets = new Insets(4, 4, 4, 4);
+        gP.fill = GridBagConstraints.HORIZONTAL;
+        inserirCampo(painelProfessor, gP, "SIAPE:", campoSiape, 0);
+        inserirCampo(painelProfessor, gP, "Departamento:", campoDpto, 1);
+        painelProfessor.setVisible(false);
 
-        // Eventos dos radio buttons
-        radioAluno.addActionListener(e -> {
-            painelCamposAluno.setVisible(true);
-            painelCamposProfessor.setVisible(false);
-            botaoCadastrarPessoa.setText("Cadastrar Aluno");
-            form.revalidate();
-            form.repaint();
-        });
-        radioProfessor.addActionListener(e -> {
-            painelCamposAluno.setVisible(false);
-            painelCamposProfessor.setVisible(true);
-            botaoCadastrarPessoa.setText("Cadastrar Professor");
+        g.gridx = 0; g.gridy = 4; g.gridwidth = 2;
+        form.add(painelAluno, g);
+        g.gridy = 5;
+        form.add(painelProfessor, g);
+
+        btnCadastrarPessoa = new JButton("Cadastrar Aluno");
+        g.gridy = 6;
+        g.fill = GridBagConstraints.NONE;
+        g.anchor = GridBagConstraints.CENTER;
+        form.add(btnCadastrarPessoa, g);
+
+        // troca os campos quando muda o radio button
+        rbAluno.addActionListener(e -> {
+            painelAluno.setVisible(true);
+            painelProfessor.setVisible(false);
+            btnCadastrarPessoa.setText("Cadastrar Aluno");
             form.revalidate();
             form.repaint();
         });
 
-        botaoCadastrarPessoa.addActionListener(e -> {
-            if (radioAluno.isSelected()) cadastrarAluno();
+        rbProfessor.addActionListener(e -> {
+            painelAluno.setVisible(false);
+            painelProfessor.setVisible(true);
+            btnCadastrarPessoa.setText("Cadastrar Professor");
+            form.revalidate();
+            form.repaint();
+        });
+
+        btnCadastrarPessoa.addActionListener(e -> {
+            if (rbAluno.isSelected()) cadastrarAluno();
             else cadastrarProfessor();
         });
 
-        // Tabela de pessoas
-        String[] colunas = {"Nome", "CPF", "Tipo", "Detalhe"};
-        modeloTabelaPessoas = new DefaultTableModel(colunas, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+        // tabela com as pessoas cadastradas
+        String[] cols = { "Nome", "CPF", "Tipo", "Info" };
+        modeloPessoas = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) { return false; }
         };
-        tabelaPessoas = new JTable(modeloTabelaPessoas);
-        tabelaPessoas.setRowHeight(22);
+        tabelaPessoas = new JTable(modeloPessoas);
+        tabelaPessoas.setRowHeight(24);
 
-        // Criando painel inferior para agrupar a tabela e o botão de exclusão de pessoas
-        JPanel painelTabelaEPessoas = new JPanel(new BorderLayout(5, 5));
-        painelTabelaEPessoas.add(new JScrollPane(tabelaPessoas), BorderLayout.CENTER);
-        
-        JButton botaoExcluirPessoa = new JButton("Excluir");
-        painelTabelaEPessoas.add(botaoExcluirPessoa, BorderLayout.SOUTH);
+        JPanel painelBaixo = new JPanel(new BorderLayout(4, 4));
+        painelBaixo.add(new JScrollPane(tabelaPessoas), BorderLayout.CENTER);
 
-        // Ação para excluir pessoa selecionada da tabela
-        botaoExcluirPessoa.addActionListener(e -> {
+        JButton btnExcluir = new JButton("Excluir Pessoa");
+        painelBaixo.add(btnExcluir, BorderLayout.SOUTH);
+
+        btnExcluir.addActionListener(e -> {
             int linha = tabelaPessoas.getSelectedRow();
-            if (linha >= 0) {
-                String nome = modeloTabelaPessoas.getValueAt(linha, 0).toString();
-                String cpf = modeloTabelaPessoas.getValueAt(linha, 1).toString();
-                String tipo = modeloTabelaPessoas.getValueAt(linha, 2).toString();
-                
-                int resposta = JOptionPane.showConfirmDialog(this, 
-                        "Tem certeza que deseja excluir o " + tipo.toLowerCase() + " \"" + nome + "\"?", 
-                        "Confirmação", JOptionPane.YES_NO_OPTION);
-                
-                if (resposta == JOptionPane.YES_OPTION) {
-                    biblioteca.removerPessoa(cpf);
-                    biblioteca.salvar();
-                    atualizarTabelaPessoas();
-                    log(tipo + " excluído(a): " + nome + " (CPF: " + cpf + ")");
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Por favor, selecione uma pessoa na tabela para excluir.", "Aviso", JOptionPane.WARNING_MESSAGE);
+
+            if (linha < 0) {
+                JOptionPane.showMessageDialog(this,
+                    "Selecione uma pessoa na tabela.",
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String nome = modeloPessoas.getValueAt(linha, 0).toString();
+            String cpf  = modeloPessoas.getValueAt(linha, 1).toString();
+            String tipo = modeloPessoas.getValueAt(linha, 2).toString();
+
+            int ok = JOptionPane.showConfirmDialog(this,
+                "Excluir " + tipo + " \"" + nome + "\"?",
+                "Confirmar", JOptionPane.YES_NO_OPTION);
+
+            if (ok == JOptionPane.YES_OPTION) {
+                biblioteca.removerPessoa(cpf);
+                biblioteca.salvar();
+                recarregarTabelaPessoas();
+                registrarLog(tipo + " removido(a): " + nome);
             }
         });
 
-        painel.add(form, BorderLayout.NORTH);
-        painel.add(painelTabelaEPessoas, BorderLayout.CENTER); // Adiciona o conjunto tabela + botão
-        return painel;
+        tela.add(form, BorderLayout.NORTH);
+        tela.add(painelBaixo, BorderLayout.CENTER);
+        return tela;
     }
 
-    // ── Helpers de layout ────────────────────────────────────
-
-    private void adicionarCampo(JPanel painel, GridBagConstraints gbc,
-                                 String label, JTextField campo, int linha) {
-        gbc.gridx = 0; gbc.gridy = linha; gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        painel.add(new JLabel(label), gbc);
-        gbc.gridx = 1;
-        gbc.weightx = 1;
-        painel.add(campo, gbc);
+    // -------------------------------------------------------
+    // METODO AUXILIAR - adiciona label + campo no GridBag
+    // -------------------------------------------------------
+    private void inserirCampo(JPanel painel, GridBagConstraints g,
+                               String label, JTextField campo, int linha) {
+        g.gridx = 0; g.gridy = linha;
+        g.gridwidth = 1; g.weightx = 0;
+        painel.add(new JLabel(label), g);
+        g.gridx = 1; g.weightx = 1;
+        painel.add(campo, g);
     }
 
-    // ── Ações ────────────────────────────────────────────────
+    // -------------------------------------------------------
+    // ACOES DOS BOTOES
+    // -------------------------------------------------------
 
-    private void cadastrarLivro() {
+    private void salvarLivro() {
         String titulo = campoTitulo.getText().trim();
         String autor  = campoAutor.getText().trim();
         String isbn   = campoIsbn.getText().trim();
         String anoStr = campoAno.getText().trim();
 
         if (titulo.isEmpty() || autor.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Título e Autor são obrigatórios!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "Titulo e autor sao obrigatorios!",
+                "Campos vazios", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         int ano = 0;
         if (!anoStr.isEmpty()) {
-            try { ano = Integer.parseInt(anoStr); }
-            catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Ano inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
+            try {
+                ano = Integer.parseInt(anoStr);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Ano invalido, coloque so numeros.",
+                    "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
 
-        biblioteca.adicionarLivro(new Livro(titulo, autor, isbn.isEmpty() ? "N/A" : isbn, ano));
+        Livro novo = new Livro(titulo, autor, isbn.isEmpty() ? "N/A" : isbn, ano);
+        biblioteca.adicionarLivro(novo);
         biblioteca.salvar();
-        log("Livro cadastrado: " + titulo);
-        campoTitulo.setText(""); campoAutor.setText("");
-        campoIsbn.setText("");   campoAno.setText("");
-        atualizarTabelaLivros();
+
+        // limpa os campos
+        campoTitulo.setText("");
+        campoAutor.setText("");
+        campoIsbn.setText("");
+        campoAno.setText("");
+
+        recarregarTabelaLivros();
+        registrarLog("Livro adicionado: " + titulo);
     }
 
-    private void buscarLivro() {
-        String termo = campoBusca.getText().trim();
-        modeloTabelaLivros.setRowCount(0);
+    private void buscarNaTabela() {
+        String termo = campoBusca.getText().trim().toLowerCase();
+        modeloLivros.setRowCount(0);
+
         for (Livro l : biblioteca.getLivros()) {
-            if (l.getTitulo().toLowerCase().contains(termo.toLowerCase())) {
-                String status = l.isDisponivel() ? "Disponível"
-                        : "Emprestado → " + l.getPessoaComLivro().getNome();
-                modeloTabelaLivros.addRow(new Object[]{
-                    l.getTitulo(), l.getAutor(), l.getIsbn(), l.getAnoPublicacao(), status
+            if (l.getTitulo().toLowerCase().contains(termo)) {
+                String sit = l.isDisponivel()
+                    ? "Disponivel"
+                    : "Com: " + l.getPessoaComLivro().getNome();
+                modeloLivros.addRow(new Object[]{
+                    l.getTitulo(), l.getAutor(), l.getIsbn(), l.getAnoPublicacao(), sit
                 });
             }
         }
-        log("Busca por \"" + termo + "\": " + modeloTabelaLivros.getRowCount() + " resultado(s).");
+        registrarLog("Busca: " + modeloLivros.getRowCount() + " resultado(s) para \"" + campoBusca.getText().trim() + "\"");
     }
 
-    private void importarTxt() {
-        int count = biblioteca.importarLivrosTxt();
-        log(count + " livro(s) importado(s) do arquivo TXT.");
-        atualizarTabelaLivros();
+    private void importarDoTxt() {
+        int qtd = biblioteca.importarLivrosTxt();
+        recarregarTabelaLivros();
+        registrarLog(qtd + " livro(s) importado(s) do arquivo livros.txt");
     }
 
-    private void realizarEmprestimo() {
-        String titulo = campoTituloEmprestimo.getText().trim();
-        String nome   = campoNomePessoa.getText().trim();
+    private void fazerEmprestimo() {
+        String titulo = campoTituloEmp.getText().trim();
+        String nome   = campoNomeEmp.getText().trim();
+
         if (titulo.isEmpty() || nome.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Preencha todos os campos!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "Preencha o titulo e o nome da pessoa.",
+                "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         try {
             biblioteca.emprestar(titulo, nome);
-            log("Empréstimo: \"" + titulo + "\" → " + nome);
-            campoTituloEmprestimo.setText("");
-            campoNomePessoa.setText("");
-            atualizarTabelaLivros();
+            campoTituloEmp.setText("");
+            campoNomeEmp.setText("");
+            recarregarTabelaLivros();
+            registrarLog("Emprestimo feito: \"" + titulo + "\" para " + nome);
         } catch (LivroIndisponivelException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Livro Indisponível", JOptionPane.ERROR_MESSAGE);
-            log("ERRO: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this,
+                ex.getMessage(),
+                "Livro indisponivel", JOptionPane.ERROR_MESSAGE);
+            registrarLog("Erro no emprestimo: " + ex.getMessage());
         }
     }
 
-    private void realizarDevolucao() {
-        String titulo = campoTituloDevolucao.getText().trim();
+    private void fazerDevolucao() {
+        String titulo = campoTituloDev.getText().trim();
+
         if (titulo.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Informe o título!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "Digite o titulo do livro para devolver.",
+                "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         biblioteca.devolver(titulo);
-        log("Devolução: \"" + titulo + "\"");
-        campoTituloDevolucao.setText("");
-        atualizarTabelaLivros();
+        campoTituloDev.setText("");
+        recarregarTabelaLivros();
+        registrarLog("Devolucao realizada: \"" + titulo + "\"");
     }
 
     private void cadastrarAluno() {
-        String nome      = campoNomeCadastro.getText().trim();
+        String nome      = campoNome.getText().trim();
         String cpf       = campoCpf.getText().trim();
         String email     = campoEmail.getText().trim();
         String matricula = campoMatricula.getText().trim();
         String curso     = campoCurso.getText().trim();
 
         if (nome.isEmpty() || cpf.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Nome e CPF são obrigatórios!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "Nome e CPF sao obrigatorios.",
+                "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         biblioteca.adicionarPessoa(new Aluno(nome, cpf, email, matricula, curso));
         biblioteca.salvar();
-        log("Aluno cadastrado: " + nome);
         limparCamposPessoa();
-        atualizarTabelaPessoas();
+        recarregarTabelaPessoas();
+        registrarLog("Aluno cadastrado: " + nome);
     }
 
     private void cadastrarProfessor() {
-        String nome         = campoNomeCadastro.getText().trim();
-        String cpf          = campoCpf.getText().trim();
-        String email        = campoEmail.getText().trim();
-        String siape        = campoSiape.getText().trim();
-        String departamento = campoDepartamento.getText().trim();
+        String nome  = campoNome.getText().trim();
+        String cpf   = campoCpf.getText().trim();
+        String email = campoEmail.getText().trim();
+        String siape = campoSiape.getText().trim();
+        String dpto  = campoDpto.getText().trim();
 
         if (nome.isEmpty() || cpf.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Nome e CPF são obrigatórios!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "Nome e CPF sao obrigatorios.",
+                "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        biblioteca.adicionarPessoa(new Professor(nome, cpf, email, siape, departamento));
+        biblioteca.adicionarPessoa(new Professor(nome, cpf, email, siape, dpto));
         biblioteca.salvar();
-        log("Professor cadastrado: " + nome);
         limparCamposPessoa();
-        atualizarTabelaPessoas();
+        recarregarTabelaPessoas();
+        registrarLog("Professor cadastrado: " + nome);
     }
 
     private void limparCamposPessoa() {
-        campoNomeCadastro.setText(""); campoCpf.setText("");
-        campoEmail.setText("");        campoMatricula.setText("");
-        campoCurso.setText("");        campoSiape.setText("");
-        campoDepartamento.setText("");
+        campoNome.setText("");
+        campoCpf.setText("");
+        campoEmail.setText("");
+        campoMatricula.setText("");
+        campoCurso.setText("");
+        campoSiape.setText("");
+        campoDpto.setText("");
     }
 
-    // ── Atualizar tabelas ────────────────────────────────────
+    // -------------------------------------------------------
+    // ATUALIZAR TABELAS
+    // -------------------------------------------------------
 
-    private void atualizarTabelaLivros() {
-        modeloTabelaLivros.setRowCount(0);
+    private void recarregarTabelaLivros() {
+        modeloLivros.setRowCount(0);
         for (Livro l : biblioteca.getLivros()) {
-            String status = l.isDisponivel() ? "Disponível"
-                    : "Emprestado → " + l.getPessoaComLivro().getNome();
-            modeloTabelaLivros.addRow(new Object[]{
-                l.getTitulo(), l.getAutor(), l.getIsbn(), l.getAnoPublicacao(), status
+            String sit = l.isDisponivel()
+                ? "Disponivel"
+                : "Com: " + l.getPessoaComLivro().getNome();
+            modeloLivros.addRow(new Object[]{
+                l.getTitulo(), l.getAutor(), l.getIsbn(), l.getAnoPublicacao(), sit
             });
         }
     }
 
-    private void atualizarTabelaPessoas() {
-        modeloTabelaPessoas.setRowCount(0);
+    private void recarregarTabelaPessoas() {
+        modeloPessoas.setRowCount(0);
         for (Pessoa p : biblioteca.getPessoas()) {
             if (p instanceof Aluno) {
                 Aluno a = (Aluno) p;
-                modeloTabelaPessoas.addRow(new Object[]{
+                modeloPessoas.addRow(new Object[]{
                     p.getNome(), p.getCpf(), "Aluno", "Curso: " + a.getCurso()
                 });
             } else if (p instanceof Professor) {
                 Professor pr = (Professor) p;
-                modeloTabelaPessoas.addRow(new Object[]{
-                    p.getNome(), p.getCpf(), "Professor", "Depto: " + pr.getDepartamento()
+                modeloPessoas.addRow(new Object[]{
+                    p.getNome(), p.getCpf(), "Professor", "Dpto: " + pr.getDepartamento()
                 });
             }
         }
     }
 
-    // ── Log ──────────────────────────────────────────────────
-
-    private void log(String mensagem) {
-        areaLog.append("> " + mensagem + "\n");
-        areaLog.setCaretPosition(areaLog.getDocument().getLength());
+    // adiciona uma linha no log
+    private void registrarLog(String msg) {
+        log.append("> " + msg + "\n");
+        log.setCaretPosition(log.getDocument().getLength());
     }
 }

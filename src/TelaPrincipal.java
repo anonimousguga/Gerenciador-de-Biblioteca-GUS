@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * Interface gráfica principal do BibliotecaManager.
+ * Interface gráfica principal do Gerenciador de biblioteca GUS.
  * Utiliza Java Swing com JFrame, JPanel, JButton, JTextField, JTable e eventos.
  */
 public class TelaPrincipal extends JFrame {
@@ -60,10 +60,10 @@ public class TelaPrincipal extends JFrame {
         setLocationRelativeTo(null);
 
         JTabbedPane abas = new JTabbedPane();
-        abas.addTab("📚 Acervo",          painelAcervo());
-        abas.addTab("➕ Cadastrar Livro",  painelCadastrarLivro());
-        abas.addTab("🔄 Empréstimo",       painelEmprestimo());
-        abas.addTab("👤 Pessoas",          painelPessoas());
+        abas.addTab("Acervo",          painelAcervo());
+        abas.addTab("Cadastrar Livro",  painelCadastrarLivro());
+        abas.addTab("Empréstimo",       painelEmprestimo());
+        abas.addTab("Pessoas",          painelPessoas());
 
         areaLog = new JTextArea(4, 0);
         areaLog.setEditable(false);
@@ -96,10 +96,13 @@ public class TelaPrincipal extends JFrame {
         JButton botaoBuscar    = new JButton("Buscar");
         JButton botaoImportar  = new JButton("Importar TXT");
         JButton botaoAtualizar = new JButton("Atualizar");
+        JButton botaoExcluir   = new JButton("Excluir Selecionado"); // Novo botão
+        
         painelBusca.add(campoBusca);
         painelBusca.add(botaoBuscar);
         painelBusca.add(botaoAtualizar);
         painelBusca.add(botaoImportar);
+        painelBusca.add(botaoExcluir); // Adicionado ao painel
 
         String[] colunas = {"Título", "Autor", "ISBN", "Ano", "Status"};
         modeloTabelaLivros = new DefaultTableModel(colunas, 0) {
@@ -114,6 +117,26 @@ public class TelaPrincipal extends JFrame {
         botaoBuscar.addActionListener(e -> buscarLivro());
         botaoAtualizar.addActionListener(e -> atualizarTabelaLivros());
         botaoImportar.addActionListener(e -> importarTxt());
+        
+        // Ação do novo botão de excluir livro
+        botaoExcluir.addActionListener(e -> {
+            int linha = tabelaLivros.getSelectedRow();
+            if (linha >= 0) {
+                String titulo = modeloTabelaLivros.getValueAt(linha, 0).toString();
+                int resposta = JOptionPane.showConfirmDialog(this, 
+                        "Tem certeza que deseja excluir o livro \"" + titulo + "\"?", 
+                        "Confirmação", JOptionPane.YES_NO_OPTION);
+                
+                if (resposta == JOptionPane.YES_OPTION) {
+                    biblioteca.removerLivro(titulo);
+                    biblioteca.salvar();
+                    atualizarTabelaLivros();
+                    log("Livro excluído do acervo: " + titulo);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Por favor, selecione um livro na tabela para excluir.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        });
 
         return painel;
     }
@@ -294,8 +317,38 @@ public class TelaPrincipal extends JFrame {
         tabelaPessoas = new JTable(modeloTabelaPessoas);
         tabelaPessoas.setRowHeight(22);
 
+        // Criando painel inferior para agrupar a tabela e o botão de exclusão de pessoas
+        JPanel painelTabelaEPessoas = new JPanel(new BorderLayout(5, 5));
+        painelTabelaEPessoas.add(new JScrollPane(tabelaPessoas), BorderLayout.CENTER);
+        
+        JButton botaoExcluirPessoa = new JButton("Excluir");
+        painelTabelaEPessoas.add(botaoExcluirPessoa, BorderLayout.SOUTH);
+
+        // Ação para excluir pessoa selecionada da tabela
+        botaoExcluirPessoa.addActionListener(e -> {
+            int linha = tabelaPessoas.getSelectedRow();
+            if (linha >= 0) {
+                String nome = modeloTabelaPessoas.getValueAt(linha, 0).toString();
+                String cpf = modeloTabelaPessoas.getValueAt(linha, 1).toString();
+                String tipo = modeloTabelaPessoas.getValueAt(linha, 2).toString();
+                
+                int resposta = JOptionPane.showConfirmDialog(this, 
+                        "Tem certeza que deseja excluir o " + tipo.toLowerCase() + " \"" + nome + "\"?", 
+                        "Confirmação", JOptionPane.YES_NO_OPTION);
+                
+                if (resposta == JOptionPane.YES_OPTION) {
+                    biblioteca.removerPessoa(cpf);
+                    biblioteca.salvar();
+                    atualizarTabelaPessoas();
+                    log(tipo + " excluído(a): " + nome + " (CPF: " + cpf + ")");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Por favor, selecione uma pessoa na tabela para excluir.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
         painel.add(form, BorderLayout.NORTH);
-        painel.add(new JScrollPane(tabelaPessoas), BorderLayout.CENTER);
+        painel.add(painelTabelaEPessoas, BorderLayout.CENTER); // Adiciona o conjunto tabela + botão
         return painel;
     }
 

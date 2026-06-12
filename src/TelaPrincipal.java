@@ -2,7 +2,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 
 /**
  * Interface gráfica principal do BibliotecaManager.
@@ -32,8 +31,17 @@ public class TelaPrincipal extends JFrame {
     private JTextField campoNomeCadastro;
     private JTextField campoCpf;
     private JTextField campoEmail;
+    // Campos exclusivos de Aluno
     private JTextField campoMatricula;
     private JTextField campoCurso;
+    // Campos exclusivos de Professor
+    private JTextField campoSiape;
+    private JTextField campoDepartamento;
+    // Painéis que alternam
+    private JPanel painelCamposAluno;
+    private JPanel painelCamposProfessor;
+    private JButton botaoCadastrarPessoa;
+
     private JTable tabelaPessoas;
     private DefaultTableModel modeloTabelaPessoas;
 
@@ -51,14 +59,12 @@ public class TelaPrincipal extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Painel principal com abas
         JTabbedPane abas = new JTabbedPane();
-        abas.addTab("📚 Acervo",     painelAcervo());
-        abas.addTab("➕ Cadastrar Livro", painelCadastrarLivro());
-        abas.addTab("🔄 Empréstimo",  painelEmprestimo());
-        abas.addTab("👤 Pessoas",     painelPessoas());
+        abas.addTab("📚 Acervo",          painelAcervo());
+        abas.addTab("➕ Cadastrar Livro",  painelCadastrarLivro());
+        abas.addTab("🔄 Empréstimo",       painelEmprestimo());
+        abas.addTab("👤 Pessoas",          painelPessoas());
 
-        // Área de log na parte inferior
         areaLog = new JTextArea(4, 0);
         areaLog.setEditable(false);
         areaLog.setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -67,7 +73,6 @@ public class TelaPrincipal extends JFrame {
         JScrollPane scrollLog = new JScrollPane(areaLog);
         scrollLog.setBorder(BorderFactory.createTitledBorder("Log"));
 
-        // Layout principal
         JPanel painelPrincipal = new JPanel(new BorderLayout());
         painelPrincipal.add(abas, BorderLayout.CENTER);
         painelPrincipal.add(scrollLog, BorderLayout.SOUTH);
@@ -85,31 +90,27 @@ public class TelaPrincipal extends JFrame {
         JPanel painel = new JPanel(new BorderLayout(10, 10));
         painel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Barra de busca
         JPanel painelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT));
         painelBusca.add(new JLabel("Buscar:"));
         campoBusca = new JTextField(25);
-        JButton botaoBuscar   = new JButton("Buscar");
-        JButton botaoImportar = new JButton("Importar TXT");
+        JButton botaoBuscar    = new JButton("Buscar");
+        JButton botaoImportar  = new JButton("Importar TXT");
         JButton botaoAtualizar = new JButton("Atualizar");
         painelBusca.add(campoBusca);
         painelBusca.add(botaoBuscar);
         painelBusca.add(botaoAtualizar);
         painelBusca.add(botaoImportar);
 
-        // Tabela de livros
         String[] colunas = {"Título", "Autor", "ISBN", "Ano", "Status"};
         modeloTabelaLivros = new DefaultTableModel(colunas, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabelaLivros = new JTable(modeloTabelaLivros);
         tabelaLivros.setRowHeight(22);
-        JScrollPane scroll = new JScrollPane(tabelaLivros);
 
         painel.add(painelBusca, BorderLayout.NORTH);
-        painel.add(scroll, BorderLayout.CENTER);
+        painel.add(new JScrollPane(tabelaLivros), BorderLayout.CENTER);
 
-        // Eventos
         botaoBuscar.addActionListener(e -> buscarLivro());
         botaoAtualizar.addActionListener(e -> atualizarTabelaLivros());
         botaoImportar.addActionListener(e -> importarTxt());
@@ -123,19 +124,19 @@ public class TelaPrincipal extends JFrame {
         JPanel painel = new JPanel(new GridBagLayout());
         painel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets  = new Insets(8, 8, 8, 8);
-        gbc.fill    = GridBagConstraints.HORIZONTAL;
-        gbc.anchor  = GridBagConstraints.WEST;
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill   = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
         campoTitulo = new JTextField(25);
         campoAutor  = new JTextField(25);
         campoIsbn   = new JTextField(25);
         campoAno    = new JTextField(25);
 
-        adicionarCampo(painel, gbc, "Título:",  campoTitulo, 0);
-        adicionarCampo(painel, gbc, "Autor:",   campoAutor,  1);
-        adicionarCampo(painel, gbc, "ISBN:",    campoIsbn,   2);
-        adicionarCampo(painel, gbc, "Ano:",     campoAno,    3);
+        adicionarCampo(painel, gbc, "Título:", campoTitulo, 0);
+        adicionarCampo(painel, gbc, "Autor:",  campoAutor,  1);
+        adicionarCampo(painel, gbc, "ISBN:",   campoIsbn,   2);
+        adicionarCampo(painel, gbc, "Ano:",    campoAno,    3);
 
         JButton botaoCadastrar = new JButton("Cadastrar Livro");
         botaoCadastrar.setPreferredSize(new Dimension(200, 35));
@@ -145,7 +146,6 @@ public class TelaPrincipal extends JFrame {
         painel.add(botaoCadastrar, gbc);
 
         botaoCadastrar.addActionListener(e -> cadastrarLivro());
-
         return painel;
     }
 
@@ -194,7 +194,6 @@ public class TelaPrincipal extends JFrame {
 
         painel.add(painelEmp);
         painel.add(painelDev);
-
         return painel;
     }
 
@@ -206,7 +205,7 @@ public class TelaPrincipal extends JFrame {
 
         // Formulário
         JPanel form = new JPanel(new GridBagLayout());
-        form.setBorder(BorderFactory.createTitledBorder("Cadastrar Aluno"));
+        form.setBorder(BorderFactory.createTitledBorder("Cadastrar Pessoa"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill   = GridBagConstraints.HORIZONTAL;
@@ -214,34 +213,89 @@ public class TelaPrincipal extends JFrame {
         campoNomeCadastro = new JTextField(20);
         campoCpf          = new JTextField(20);
         campoEmail        = new JTextField(20);
-        campoMatricula    = new JTextField(20);
-        campoCurso        = new JTextField(20);
 
-        adicionarCampo(form, gbc, "Nome:",       campoNomeCadastro, 0);
-        adicionarCampo(form, gbc, "CPF:",        campoCpf,          1);
-        adicionarCampo(form, gbc, "E-mail:",     campoEmail,        2);
-        adicionarCampo(form, gbc, "Matrícula:",  campoMatricula,    3);
-        adicionarCampo(form, gbc, "Curso:",      campoCurso,        4);
+        adicionarCampo(form, gbc, "Nome:",   campoNomeCadastro, 0);
+        adicionarCampo(form, gbc, "CPF:",    campoCpf,          1);
+        adicionarCampo(form, gbc, "E-mail:", campoEmail,        2);
 
-        JButton botaoCadastrar = new JButton("Cadastrar Aluno");
-        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2;
+        // Seletor Aluno / Professor
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; gbc.weightx = 0;
+        form.add(new JLabel("Tipo:"), gbc);
+        JRadioButton radioAluno     = new JRadioButton("Aluno", true);
+        JRadioButton radioProfessor = new JRadioButton("Professor");
+        ButtonGroup grupo = new ButtonGroup();
+        grupo.add(radioAluno);
+        grupo.add(radioProfessor);
+        JPanel painelRadio = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        painelRadio.add(radioAluno);
+        painelRadio.add(radioProfessor);
+        gbc.gridx = 1; gbc.weightx = 1;
+        form.add(painelRadio, gbc);
+
+        // Campos de Aluno
+        campoMatricula = new JTextField(20);
+        campoCurso     = new JTextField(20);
+        painelCamposAluno = new JPanel(new GridBagLayout());
+        GridBagConstraints gbcA = new GridBagConstraints();
+        gbcA.insets = new Insets(5, 5, 5, 5);
+        gbcA.fill   = GridBagConstraints.HORIZONTAL;
+        adicionarCampo(painelCamposAluno, gbcA, "Matrícula:", campoMatricula, 0);
+        adicionarCampo(painelCamposAluno, gbcA, "Curso:",     campoCurso,     1);
+
+        // Campos de Professor
+        campoSiape        = new JTextField(20);
+        campoDepartamento = new JTextField(20);
+        painelCamposProfessor = new JPanel(new GridBagLayout());
+        GridBagConstraints gbcP = new GridBagConstraints();
+        gbcP.insets = new Insets(5, 5, 5, 5);
+        gbcP.fill   = GridBagConstraints.HORIZONTAL;
+        adicionarCampo(painelCamposProfessor, gbcP, "SIAPE:",        campoSiape,        0);
+        adicionarCampo(painelCamposProfessor, gbcP, "Departamento:", campoDepartamento, 1);
+        painelCamposProfessor.setVisible(false);
+
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
+        form.add(painelCamposAluno,    gbc);
+        gbc.gridy = 5;
+        form.add(painelCamposProfessor, gbc);
+
+        // Botão cadastrar
+        botaoCadastrarPessoa = new JButton("Cadastrar Aluno");
+        gbc.gridy = 6;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
-        form.add(botaoCadastrar, gbc);
-        botaoCadastrar.addActionListener(e -> cadastrarAluno());
+        form.add(botaoCadastrarPessoa, gbc);
+
+        // Eventos dos radio buttons
+        radioAluno.addActionListener(e -> {
+            painelCamposAluno.setVisible(true);
+            painelCamposProfessor.setVisible(false);
+            botaoCadastrarPessoa.setText("Cadastrar Aluno");
+            form.revalidate();
+            form.repaint();
+        });
+        radioProfessor.addActionListener(e -> {
+            painelCamposAluno.setVisible(false);
+            painelCamposProfessor.setVisible(true);
+            botaoCadastrarPessoa.setText("Cadastrar Professor");
+            form.revalidate();
+            form.repaint();
+        });
+
+        botaoCadastrarPessoa.addActionListener(e -> {
+            if (radioAluno.isSelected()) cadastrarAluno();
+            else cadastrarProfessor();
+        });
 
         // Tabela de pessoas
-        String[] colunas = {"Nome", "CPF", "Tipo"};
+        String[] colunas = {"Nome", "CPF", "Tipo", "Detalhe"};
         modeloTabelaPessoas = new DefaultTableModel(colunas, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabelaPessoas = new JTable(modeloTabelaPessoas);
         tabelaPessoas.setRowHeight(22);
-        JScrollPane scroll = new JScrollPane(tabelaPessoas);
 
-        painel.add(form,   BorderLayout.NORTH);
-        painel.add(scroll, BorderLayout.CENTER);
-
+        painel.add(form, BorderLayout.NORTH);
+        painel.add(new JScrollPane(tabelaPessoas), BorderLayout.CENTER);
         return painel;
     }
 
@@ -279,10 +333,8 @@ public class TelaPrincipal extends JFrame {
             }
         }
 
-        Livro livro = new Livro(titulo, autor, isbn.isEmpty() ? "N/A" : isbn, ano);
-        biblioteca.adicionarLivro(livro);
+        biblioteca.adicionarLivro(new Livro(titulo, autor, isbn.isEmpty() ? "N/A" : isbn, ano));
         biblioteca.salvar();
-
         log("Livro cadastrado: " + titulo);
         campoTitulo.setText(""); campoAutor.setText("");
         campoIsbn.setText("");   campoAno.setText("");
@@ -292,7 +344,6 @@ public class TelaPrincipal extends JFrame {
     private void buscarLivro() {
         String termo = campoBusca.getText().trim();
         modeloTabelaLivros.setRowCount(0);
-
         for (Livro l : biblioteca.getLivros()) {
             if (l.getTitulo().toLowerCase().contains(termo.toLowerCase())) {
                 String status = l.isDisponivel() ? "Disponível"
@@ -314,15 +365,13 @@ public class TelaPrincipal extends JFrame {
     private void realizarEmprestimo() {
         String titulo = campoTituloEmprestimo.getText().trim();
         String nome   = campoNomePessoa.getText().trim();
-
         if (titulo.isEmpty() || nome.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Preencha todos os campos!", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         try {
             biblioteca.emprestar(titulo, nome);
-            log("Empréstimo realizado: \"" + titulo + "\" → " + nome);
+            log("Empréstimo: \"" + titulo + "\" → " + nome);
             campoTituloEmprestimo.setText("");
             campoNomePessoa.setText("");
             atualizarTabelaLivros();
@@ -335,37 +384,58 @@ public class TelaPrincipal extends JFrame {
     private void realizarDevolucao() {
         String titulo = campoTituloDevolucao.getText().trim();
         if (titulo.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Informe o título do livro!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Informe o título!", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
         biblioteca.devolver(titulo);
-        log("Devolução realizada: \"" + titulo + "\"");
+        log("Devolução: \"" + titulo + "\"");
         campoTituloDevolucao.setText("");
         atualizarTabelaLivros();
     }
 
     private void cadastrarAluno() {
-        String nome       = campoNomeCadastro.getText().trim();
-        String cpf        = campoCpf.getText().trim();
-        String email      = campoEmail.getText().trim();
-        String matricula  = campoMatricula.getText().trim();
-        String curso      = campoCurso.getText().trim();
+        String nome      = campoNomeCadastro.getText().trim();
+        String cpf       = campoCpf.getText().trim();
+        String email     = campoEmail.getText().trim();
+        String matricula = campoMatricula.getText().trim();
+        String curso     = campoCurso.getText().trim();
 
         if (nome.isEmpty() || cpf.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nome e CPF são obrigatórios!", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Chamada polimórfica — adicionarPessoa aceita qualquer Pessoa
-        Aluno aluno = new Aluno(nome, cpf, email, matricula, curso);
-        biblioteca.adicionarPessoa(aluno);
+        biblioteca.adicionarPessoa(new Aluno(nome, cpf, email, matricula, curso));
         biblioteca.salvar();
-
         log("Aluno cadastrado: " + nome);
+        limparCamposPessoa();
+        atualizarTabelaPessoas();
+    }
+
+    private void cadastrarProfessor() {
+        String nome         = campoNomeCadastro.getText().trim();
+        String cpf          = campoCpf.getText().trim();
+        String email        = campoEmail.getText().trim();
+        String siape        = campoSiape.getText().trim();
+        String departamento = campoDepartamento.getText().trim();
+
+        if (nome.isEmpty() || cpf.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nome e CPF são obrigatórios!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        biblioteca.adicionarPessoa(new Professor(nome, cpf, email, siape, departamento));
+        biblioteca.salvar();
+        log("Professor cadastrado: " + nome);
+        limparCamposPessoa();
+        atualizarTabelaPessoas();
+    }
+
+    private void limparCamposPessoa() {
         campoNomeCadastro.setText(""); campoCpf.setText("");
         campoEmail.setText("");        campoMatricula.setText("");
-        campoCurso.setText("");
-        atualizarTabelaPessoas();
+        campoCurso.setText("");        campoSiape.setText("");
+        campoDepartamento.setText("");
     }
 
     // ── Atualizar tabelas ────────────────────────────────────
@@ -384,8 +454,17 @@ public class TelaPrincipal extends JFrame {
     private void atualizarTabelaPessoas() {
         modeloTabelaPessoas.setRowCount(0);
         for (Pessoa p : biblioteca.getPessoas()) {
-            String tipo = (p instanceof Aluno) ? "Aluno" : "Professor";
-            modeloTabelaPessoas.addRow(new Object[]{ p.getNome(), p.getCpf(), tipo });
+            if (p instanceof Aluno) {
+                Aluno a = (Aluno) p;
+                modeloTabelaPessoas.addRow(new Object[]{
+                    p.getNome(), p.getCpf(), "Aluno", "Curso: " + a.getCurso()
+                });
+            } else if (p instanceof Professor) {
+                Professor pr = (Professor) p;
+                modeloTabelaPessoas.addRow(new Object[]{
+                    p.getNome(), p.getCpf(), "Professor", "Depto: " + pr.getDepartamento()
+                });
+            }
         }
     }
 
@@ -396,4 +475,3 @@ public class TelaPrincipal extends JFrame {
         areaLog.setCaretPosition(areaLog.getDocument().getLength());
     }
 }
-

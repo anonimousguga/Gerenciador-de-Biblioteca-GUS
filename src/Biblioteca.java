@@ -60,6 +60,9 @@ public class Biblioteca implements Serializable {
         pessoas.add(pessoa);
     }
 
+    public void removerPessoa(String cpf) {
+    pessoas.removeIf(p -> p.getCpf().equals(cpf));
+    }
     public Pessoa buscarPessoa(String nome) {
         for (Pessoa p : pessoas) {
             if (p.getNome().equalsIgnoreCase(nome)) {
